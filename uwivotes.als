@@ -115,7 +115,7 @@ pred inv [uv: uwiVotes]{
         - election must have a start and end date
         - election must have a start status
         - emails must be associated to a candidate or a voter
-        - if email is the same between a candidate and a voter, then the graduate and commute status must be the same
+        - if email is the same between a candidate and a voter, then the graduate and commute status must be the same (considered the same person)
     */
     
     all election: uv.election | one election.(uv.electionStart) and one election.(uv.electionEnd)
@@ -167,7 +167,7 @@ pred init [uv:uwiVotes]{
     some candidateCStatus
     some voterBallot
 } run init for 4 but 1 uwiVotes expect 1
-//
+
 pred sanityCheck{
     some uv: uwiVotes{
         some uv.election

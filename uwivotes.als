@@ -135,6 +135,47 @@ pred inv [uv: uwiVotes]{
 
 }
 
+private pred noChange[preUV, postUV: uwiVotes]{
+    preUV.election = postUV.election
+    preUV.sDate = postUV.sDate
+    preUV.eDate = postUV.eDate
+    preUV.candidates = postUV.candidates
+    preUV.positions = postUV.positions
+    preUV.faculties = postUV.faculties
+    preUV.halls = postUV.halls
+    preUV. voters = postUV.voters
+    preUV. emails = postUV.emails
+    preUV. voteStats = postUV.voteStats
+    preUV. gradStats = postUV.gradStats
+    preUV. commuteStats = postUV.commuteStats
+    preUV. electStats = postUV.electStats
+    preUV. ballots = postUV.ballots
+    preUV. electCandidates = postUV.electCandidates
+    preUV. electionStart = postUV.electionStart
+    preUV. electionEnd = postUV.electionEnd
+    preUV. electionStatus = postUV.electionStatus
+    preUV. electVoters = postUV.electVoters
+    preUV. candidateEmails = postUV.candidateEmails
+    preUV. candidatePos = postUV.candidatePos
+    preUV. candidateFaculty = postUV.candidateFaculty
+    preUV. candidateHall = postUV.candidateHall
+    preUV. voterEmails = postUV.voterEmails 
+    preUV. voterFaculty = postUV.voterFaculty
+    preUV. voterHall = postUV.voterHall
+    preUV. voterVStatus = postUV.voterVStatus
+    preUV. voterGStatus = postUV.voterGStatus
+    preUV. voterCStatus = postUV.voterCStatus
+    preUV. candidateGStatus = postUV.candidateGStatus
+    preUV. candidateCStatus = postUV.candidateCStatus
+    preUV. voterBallot = postUV.voterBallot
+    preUV.ballotCategories = postUV.ballotCategories
+}
+
+pred skip[preUV, postUV: uwiVotes] {
+    noChange[preUV, postUV]
+} run skip for 4 but 1 uwiVotes expect 1
+run skip for 4 but 2 uwiVotes expect 1
+
 //FACTS - correct this when complete 
 fact {all uv:uwiVotes | inv[uv]}
 
@@ -145,7 +186,6 @@ fact {all uv:uwiVotes | inv[uv]}
 //         let uvNext = uv.next |
 //             some
 // }
-
 
 //OPERATIONS (??)
 
@@ -183,6 +223,7 @@ pred init [uv:uwiVotes]{
     some candidateGStatus
     some candidateCStatus
     some voterBallot
+    some ballotCategories
 } run init for 4 but 1 uwiVotes expect 1
 
 pred sanityCheck{
@@ -196,3 +237,7 @@ pred sanityCheck{
     }
 } run sanityCheck for 4 but 1 uwiVotes expect 1
 
+//ASSERTIONS
+assert initEstablishes{
+	all uv: uwiVotes| init[uv] implies inv[uv]
+}check initEstablishes

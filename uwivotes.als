@@ -1,7 +1,7 @@
 module uwiVotes
 
 //SYSTEM ELEMENTS
-sig Election, Date, Position, Faculty, Hall, Email, Ballot, Category {}
+sig Election, Date, Position, Faculty, Hall, Email, Ballot, Vote {}
 sig Candidate, Voter {}
 
 abstract sig ifStarted {}
@@ -33,7 +33,7 @@ sig uwiVotes {
     commuteStats: set ifCommute,
     electStats: one ifStarted,
     ballots: set Ballot,
-    categories: set Category,
+    votes: set Vote,
 
     //Constraints
     electCandidates: election -> candidates,
@@ -54,7 +54,7 @@ sig uwiVotes {
     candidateGStatus: candidates -> gradStats,
     candidateCStatus: candidates -> commuteStats,
     voterBallot: voters -> ballots,
-    ballotCategories: ballots -> categories
+    ballotVotes: ballots -> votes
 }
 
 //PREDICATES 
@@ -96,6 +96,7 @@ pred inv [uv: uwiVotes]{
         - voters must have graduate status
         - voters must have commute status
         - voters must have a ballot
+        - if a voter commutes and is a graduate, they should have at least 2 votes on their ballot
     */
 
     all voter: uv.voters | one uv.electVoters.voter
@@ -112,6 +113,9 @@ pred inv [uv: uwiVotes]{
     all voter: uv.voters | one voter.(uv.voterGStatus)
     all voter: uv.voters | one voter.(uv.voterCStatus)
     all voter: uv.voters | one voter.(uv.voterBallot)
+    let vcs = uv.voterCStatus, vgs = uv.voterGStatus, vb = uv.voterBallot {
+        all voter: uv.voters | (voter.vcs = DoesCommute) and (voter.vgs = isGraduate) implies #((voter.vb).(uv.ballotVotes)) >= 2
+    }
     
     /* General Constraints
         The following block contains all general constraints English. They 
@@ -120,8 +124,10 @@ pred inv [uv: uwiVotes]{
         - election must have a start status
         - emails must be associated to a candidate or a voter
         - if email is the same between a candidate and a voter, then the graduate and commute status must be the same (considered the same person)
-        - no voter should have an empty ballot (no categories)
-        - all categories must be associated with atleast one ballot
+        - no voter should submit an empty ballot (no categories)
+        - all votes must be associated with atleast one ballot
+        - number of votes any ballot has should never exceed the number of positions
+        - all ballots must belong to a voter
     */
     
     all election: uv.election | one election.(uv.electionStart) and one election.(uv.electionEnd)
@@ -131,8 +137,10 @@ pred inv [uv: uwiVotes]{
         all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateGStatus) = voter.(uv.voterGStatus)
         all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateCStatus) = voter.(uv.voterCStatus)
     }
-    all ballot: uv.ballots | some ballot.(uv.ballotCategories)
-
+    all ballot: uv.ballots | some ballot.(uv.ballotVotes)
+    all votes: uv.votes | some uv.ballotVotes.votes
+    all ballot: uv.ballots | #(ballot.(uv.ballotVotes)) <= #(uv.candidatePos)
+    all ballot: uv.ballots | one uv.voterBallot.ballot
 }
 
 private pred noChange[preUV, postUV: uwiVotes]{
@@ -143,32 +151,32 @@ private pred noChange[preUV, postUV: uwiVotes]{
     preUV.positions = postUV.positions
     preUV.faculties = postUV.faculties
     preUV.halls = postUV.halls
-    preUV. voters = postUV.voters
-    preUV. emails = postUV.emails
-    preUV. voteStats = postUV.voteStats
-    preUV. gradStats = postUV.gradStats
-    preUV. commuteStats = postUV.commuteStats
-    preUV. electStats = postUV.electStats
-    preUV. ballots = postUV.ballots
-    preUV. electCandidates = postUV.electCandidates
-    preUV. electionStart = postUV.electionStart
-    preUV. electionEnd = postUV.electionEnd
-    preUV. electionStatus = postUV.electionStatus
-    preUV. electVoters = postUV.electVoters
-    preUV. candidateEmails = postUV.candidateEmails
-    preUV. candidatePos = postUV.candidatePos
-    preUV. candidateFaculty = postUV.candidateFaculty
-    preUV. candidateHall = postUV.candidateHall
-    preUV. voterEmails = postUV.voterEmails 
-    preUV. voterFaculty = postUV.voterFaculty
-    preUV. voterHall = postUV.voterHall
-    preUV. voterVStatus = postUV.voterVStatus
-    preUV. voterGStatus = postUV.voterGStatus
-    preUV. voterCStatus = postUV.voterCStatus
-    preUV. candidateGStatus = postUV.candidateGStatus
-    preUV. candidateCStatus = postUV.candidateCStatus
-    preUV. voterBallot = postUV.voterBallot
-    preUV.ballotCategories = postUV.ballotCategories
+    preUV.voters = postUV.voters
+    preUV.emails = postUV.emails
+    preUV.voteStats = postUV.voteStats
+    preUV.gradStats = postUV.gradStats
+    preUV.commuteStats = postUV.commuteStats
+    preUV.electStats = postUV.electStats
+    preUV.ballots = postUV.ballots
+    preUV.electCandidates = postUV.electCandidates
+    preUV.electionStart = postUV.electionStart
+    preUV.electionEnd = postUV.electionEnd
+    preUV.electionStatus = postUV.electionStatus
+    preUV.electVoters = postUV.electVoters
+    preUV.candidateEmails = postUV.candidateEmails
+    preUV.candidatePos = postUV.candidatePos
+    preUV.candidateFaculty = postUV.candidateFaculty
+    preUV.candidateHall = postUV.candidateHall
+    preUV.voterEmails = postUV.voterEmails 
+    preUV.voterFaculty = postUV.voterFaculty
+    preUV.voterHall = postUV.voterHall
+    preUV.voterVStatus = postUV.voterVStatus
+    preUV.voterGStatus = postUV.voterGStatus
+    preUV.voterCStatus = postUV.voterCStatus
+    preUV.candidateGStatus = postUV.candidateGStatus
+    preUV.candidateCStatus = postUV.candidateCStatus
+    preUV.voterBallot = postUV.voterBallot
+    preUV.ballotVotes = postUV.ballotVotes
 }
 
 pred skip[preUV, postUV: uwiVotes] {
@@ -223,7 +231,7 @@ pred init [uv:uwiVotes]{
     some candidateGStatus
     some candidateCStatus
     some voterBallot
-    some ballotCategories
+    some ballotVotes
 } run init for 4 but 1 uwiVotes expect 1
 
 pred sanityCheck{
@@ -232,8 +240,9 @@ pred sanityCheck{
         #uv.halls = 2
         #uv.faculties = 2
         #uv.positions = 2	
-	    #uv.voters = 3
+	    #uv.voters = 2
         #uv.candidates = 2
+        #uv.votes = 4
     }
 } run sanityCheck for 4 but 1 uwiVotes expect 1
 

@@ -1,4 +1,5 @@
 module uwiVotes
+open util/ordering[uwiVotes] as uwiV
 
 //SYSTEM ELEMENTS
 sig Election, Date, Position, Faculty, Hall, Email, Ballot, Vote {}
@@ -14,7 +15,10 @@ abstract sig ifGraduate {}
 one sig isGraduate, IsntGraduate extends ifGraduate {}
 
 abstract sig ifVoted {}
-one sig HasntVoted, HasVoted extends ifVoted {}
+one sig HasVoted,  HasntVoted extends ifVoted {}
+
+abstract sig ifSubmitted {}
+one sig HasntSubmitted, Submitted extends ifSubmitted {}
 
 //UWIVOTES - Closed System Rep
 sig uwiVotes {
@@ -34,6 +38,7 @@ sig uwiVotes {
     electStats: one ifStarted,
     ballots: set Ballot,
     votes: set Vote,
+    submitStats: set ifSubmitted,
 
     //Constraints
     electCandidates: election -> candidates,
@@ -54,7 +59,8 @@ sig uwiVotes {
     candidateGStatus: candidates -> gradStats,
     candidateCStatus: candidates -> commuteStats,
     voterBallot: voters -> ballots,
-    ballotVotes: ballots -> votes
+    ballotVotes: ballots -> votes,
+    ballotSState: ballots -> submitStats
 }
 
 //PREDICATES 
@@ -97,6 +103,8 @@ pred inv [uv: uwiVotes]{
         - voters must have commute status
         - voters must have a ballot
         - if a voter commutes and is a graduate, they should have at least 2 votes on their ballot
+        - if a voter has voted then their ballot must be in its submitted state 
+            - Likewise, if a ballot is in its submitted state then the assciated voter must have voted
     */
 
     all voter: uv.voters | one uv.electVoters.voter
@@ -116,6 +124,9 @@ pred inv [uv: uwiVotes]{
     let vcs = uv.voterCStatus, vgs = uv.voterGStatus, vb = uv.voterBallot {
         all voter: uv.voters | (voter.vcs = DoesCommute) and (voter.vgs = isGraduate) implies #((voter.vb).(uv.ballotVotes)) >= 2
     }
+    let vvs = uv.voterVStatus, bss = uv.ballotSState{
+        all voter: uv.voters | voter.vvs = HasVoted iff (voter.(uv.voterBallot)).bss = Submitted
+    }
     
     /* General Constraints
         The following block contains all general constraints English. They 
@@ -128,6 +139,7 @@ pred inv [uv: uwiVotes]{
         - all votes must be associated with atleast one ballot
         - number of votes any ballot has should never exceed the number of positions
         - all ballots must belong to a voter
+        - all ballots must have a submit state
     */
     
     all election: uv.election | one election.(uv.electionStart) and one election.(uv.electionEnd)
@@ -141,6 +153,7 @@ pred inv [uv: uwiVotes]{
     all votes: uv.votes | some uv.ballotVotes.votes
     all ballot: uv.ballots | #(ballot.(uv.ballotVotes)) <= #(uv.candidatePos)
     all ballot: uv.ballots | one uv.voterBallot.ballot
+    all ballot: uv.ballots | one ballot.(uv.ballotSState)
 }
 
 private pred noChange[preUV, postUV: uwiVotes]{
@@ -184,18 +197,32 @@ pred skip[preUV, postUV: uwiVotes] {
 } run skip for 4 but 1 uwiVotes expect 1
 run skip for 4 but 2 uwiVotes expect 1
 
-//FACTS - correct this when complete 
-fact {all uv:uwiVotes | inv[uv]}
-
-// fact traces {
-//     init[uwiV/first]
-//     inv[uwiV/first]
-//     all uv: uwiVotes - uwiV/last |
-//         let uvNext = uv.next |
-//             some
-// }
+//FACTS - unused variables warning noted
+fact traces {
+    init[uwiV/first]
+    inv[uwiV/first]
+    all uv: uwiVotes - uwiV/last |
+        let uvNext = uv.next |
+            some uv1,uv2: uwiVotes, v: Voter, b: Ballot |
+        skip[uv, uvNext] or
+            submitBallot[uv1,uv2,v,b] //or
+                //another operation
+} run {} for 7 but 5 uwiVotes expect 1
 
 //OPERATIONS (??)
+pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
+    //PRECONDITIONS
+     -- ballot must not be submitted
+     -- voter must not have voted
+
+    //POSTCONDITIONS
+     -- ballot must now be submitted
+     -- voter must now have voted
+
+    //FRAMECONDITIONS
+     -- everything else is unchanged
+     -- pre and post conditions cannot be the same
+} run submitBallot for 4 but 2 uwiVotes expect 1
 
 //INSTANCES
 pred init [uv:uwiVotes]{

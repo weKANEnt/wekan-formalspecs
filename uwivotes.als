@@ -212,7 +212,7 @@ fact traces {
             submitBallot[uv1,uv2,v,b] //currently causing counter examples in initEstablishes
 } run {} for 7 but 5 uwiVotes expect 1
 
-//OPERATIONS (??)
+//OPERATIONS
 pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
     //PRECONDITIONS
      -- ballot must not be submitted
@@ -224,8 +224,38 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
      -- voter must now have voted
 
     //FRAMECONDITIONS
-     -- everything else is unchanged
-     -- pre and post conditions cannot be the same
+    preUV.election = postUV.election
+    preUV.sDate = postUV.sDate
+    preUV.eDate = postUV.eDate
+    preUV.candidates = postUV.candidates
+    preUV.positions = postUV.positions
+    preUV.faculties = postUV.faculties
+    preUV.halls = postUV.halls
+    preUV.voters = postUV.voters
+    preUV.emails = postUV.emails
+    preUV.gradStats = postUV.gradStats
+    preUV.commuteStats = postUV.commuteStats
+    preUV.electStats = postUV.electStats
+    preUV.ballots = postUV.ballots
+    preUV.votes = postUV.votes
+    preUV.electCandidates = postUV.electCandidates
+    preUV.electionStart = postUV.electionStart
+    preUV.electionEnd = postUV.electionEnd
+    preUV.electionStatus = postUV.electionStatus
+    preUV.electVoters = postUV.electVoters
+    preUV.candidateEmails = postUV.candidateEmails
+    preUV.candidatePos = postUV.candidatePos
+    preUV.candidateFaculty = postUV.candidateFaculty
+    preUV.candidateHall = postUV.candidateHall
+    preUV.voterEmails = postUV.voterEmails 
+    preUV.voterFaculty = postUV.voterFaculty
+    preUV.voterHall = postUV.voterHall
+    preUV.voterGStatus = postUV.voterGStatus
+    preUV.voterCStatus = postUV.voterCStatus
+    preUV.candidateGStatus = postUV.candidateGStatus
+    preUV.candidateCStatus = postUV.candidateCStatus
+    preUV.voterBallot = postUV.voterBallot
+    preUV.ballotVotes = postUV.ballotVotes
 } run submitBallot for 4 but 2 uwiVotes expect 1
 
 //INSTANCES

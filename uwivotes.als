@@ -140,6 +140,7 @@ pred inv [uv: uwiVotes]{
         - number of votes any ballot has should never exceed the number of positions
         - all ballots must belong to a voter
         - all ballots must have a submit state
+        - a ballot can only be in it's submitted state if the election HasStarted or HasEnded
     */
     
     all election: uv.election | one election.(uv.electionStart) and one election.(uv.electionEnd)
@@ -171,6 +172,8 @@ private pred noChange[preUV, postUV: uwiVotes]{
     preUV.commuteStats = postUV.commuteStats
     preUV.electStats = postUV.electStats
     preUV.ballots = postUV.ballots
+    preUV.votes = postUV.votes
+    preUV.submitStats = postUV.submitStats
     preUV.electCandidates = postUV.electCandidates
     preUV.electionStart = postUV.electionStart
     preUV.electionEnd = postUV.electionEnd
@@ -190,6 +193,7 @@ private pred noChange[preUV, postUV: uwiVotes]{
     preUV.candidateCStatus = postUV.candidateCStatus
     preUV.voterBallot = postUV.voterBallot
     preUV.ballotVotes = postUV.ballotVotes
+    preUV.ballotSState = postUV.ballotSState
 }
 
 pred skip[preUV, postUV: uwiVotes] {
@@ -197,7 +201,7 @@ pred skip[preUV, postUV: uwiVotes] {
 } run skip for 4 but 1 uwiVotes expect 1
 run skip for 4 but 2 uwiVotes expect 1
 
-//FACTS - unused variables warning noted
+//FACTS
 fact traces {
     init[uwiV/first]
     inv[uwiV/first]
@@ -205,8 +209,7 @@ fact traces {
         let uvNext = uv.next |
             some uv1,uv2: uwiVotes, v: Voter, b: Ballot |
         skip[uv, uvNext] or
-            submitBallot[uv1,uv2,v,b] //or
-                //another operation
+            submitBallot[uv1,uv2,v,b] //currently causing counter examples in initEstablishes
 } run {} for 7 but 5 uwiVotes expect 1
 
 //OPERATIONS (??)
@@ -214,6 +217,7 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
     //PRECONDITIONS
      -- ballot must not be submitted
      -- voter must not have voted
+     -- election must have started
 
     //POSTCONDITIONS
      -- ballot must now be submitted
@@ -240,6 +244,8 @@ pred init [uv:uwiVotes]{
     some commuteStats
     some electStats
     some ballots
+    some votes
+    some submitStats
     some electCandidates
     some electionStart
     some electionEnd
@@ -259,6 +265,7 @@ pred init [uv:uwiVotes]{
     some candidateCStatus
     some voterBallot
     some ballotVotes
+    some ballotSState
 } run init for 4 but 1 uwiVotes expect 1
 
 pred sanityCheck{

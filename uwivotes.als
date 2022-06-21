@@ -1,7 +1,7 @@
 module uwiVotes
 
 //SYSTEM ELEMENTS
-sig Election, Date, Position, Faculty, Hall, Email, Ballot {}
+sig Election, Date, Position, Faculty, Hall, Email, Ballot, Category {}
 sig Candidate, Voter {}
 
 abstract sig ifStarted {}
@@ -33,6 +33,7 @@ sig uwiVotes {
     commuteStats: set ifCommute,
     electStats: one ifStarted,
     ballots: set Ballot,
+    categories: set Category,
 
     //Constraints
     electCandidates: election -> candidates,
@@ -52,7 +53,8 @@ sig uwiVotes {
     voterCStatus: voters -> commuteStats,
     candidateGStatus: candidates -> gradStats,
     candidateCStatus: candidates -> commuteStats,
-    voterBallot: voters -> ballots
+    voterBallot: voters -> ballots,
+    ballotCategories: ballots -> categories
 }
 
 //PREDICATES 
@@ -93,6 +95,7 @@ pred inv [uv: uwiVotes]{
         - voters must have a vote status
         - voters must have graduate status
         - voters must have commute status
+        - voters must have a ballot
     */
 
     all voter: uv.voters | one uv.electVoters.voter
@@ -108,6 +111,7 @@ pred inv [uv: uwiVotes]{
     all voter: uv.voters | one voter.(uv.voterVStatus)
     all voter: uv.voters | one voter.(uv.voterGStatus)
     all voter: uv.voters | one voter.(uv.voterCStatus)
+    all voter: uv.voters | one voter.(uv.voterBallot)
     
     /* General Constraints
         The following block contains all general constraints English. They 
@@ -116,6 +120,8 @@ pred inv [uv: uwiVotes]{
         - election must have a start status
         - emails must be associated to a candidate or a voter
         - if email is the same between a candidate and a voter, then the graduate and commute status must be the same (considered the same person)
+        - no voter should have an empty ballot (no categories)
+        - all categories must be associated with atleast one ballot
     */
     
     all election: uv.election | one election.(uv.electionStart) and one election.(uv.electionEnd)
@@ -125,10 +131,21 @@ pred inv [uv: uwiVotes]{
         all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateGStatus) = voter.(uv.voterGStatus)
         all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateCStatus) = voter.(uv.voterCStatus)
     }
+    all ballot: uv.ballots | some ballot.(uv.ballotCategories)
+
 }
 
 //FACTS - correct this when complete 
 fact {all uv:uwiVotes | inv[uv]}
+
+// fact traces {
+//     init[uwiV/first]
+//     inv[uwiV/first]
+//     all uv: uwiVotes - uwiV/last |
+//         let uvNext = uv.next |
+//             some
+// }
+
 
 //OPERATIONS (??)
 
@@ -174,8 +191,8 @@ pred sanityCheck{
         #uv.halls = 2
         #uv.faculties = 2
         #uv.positions = 2	
-	    #uv.voters = 2
-        #candidates = 2
+	    #uv.voters = 3
+        #uv.candidates = 2
     }
 } run sanityCheck for 4 but 1 uwiVotes expect 1
 

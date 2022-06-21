@@ -303,8 +303,8 @@ pred sanityCheck{
         some uv.election
         #uv.halls = 2
         #uv.faculties = 2
-        #uv.positions = 2	
-	    #uv.voters = 2
+        #uv.positions = 2
+        #uv.voters = 2
         #uv.candidates = 2
         #uv.votes = 4
     }

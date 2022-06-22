@@ -105,6 +105,7 @@ pred inv [uv: uwiVotes]{
         - if a voter commutes and is a graduate, they should have at least 2 votes on their ballot
         - if a voter has voted then their ballot must be in its submitted state 
             - Likewise, if a ballot is in its submitted state then the assciated voter must have voted
+        - if a voter has not voted then their ballot should be in its not submitted state (further enforcing the above)
     */
 
     all voter: uv.voters | one uv.electVoters.voter
@@ -126,6 +127,7 @@ pred inv [uv: uwiVotes]{
     }
     let vvs = uv.voterVStatus, bss = uv.ballotSState{
         all voter: uv.voters | voter.vvs = Voted iff (voter.(uv.voterBallot)).bss = Submitted
+        all voter: uv.voters | voter.vvs = HasntVoted iff (voter.(uv.voterBallot)).bss = HasntSubmitted
     }
     
     /* General Constraints
@@ -135,12 +137,13 @@ pred inv [uv: uwiVotes]{
         - election must have a start status
         - emails must be associated to a candidate or a voter
         - if email is the same between a candidate and a voter, then the graduate and commute status must be the same (considered the same person)
+        - if email is the same between a candidate and a voter, then the faculty and hall hould be the same (considered same person)
         - no voter should submit an empty ballot (no categories)
         - all votes must be associated with atleast one ballot
         - number of votes any ballot has should never exceed the number of positions
         - all ballots must belong to a voter
         - all ballots must have a submit state
-        - a ballot can only be in it's submitted state if the election HasStarted or HasEnded
+        - a ballot can only be in it's submitted state if the election HasStarted or HasEnded (tba)
     */
     
     all election: uv.election | one election.(uv.electionStart) and one election.(uv.electionEnd)
@@ -149,6 +152,8 @@ pred inv [uv: uwiVotes]{
     let ve = uv.voterEmails, ce = uv.candidateEmails{
         all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateGStatus) = voter.(uv.voterGStatus)
         all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateCStatus) = voter.(uv.voterCStatus)
+        all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateHall) = voter.(uv.voterHall)
+        all candidate: uv.candidates, voter: uv.voters | some (candidate.ce & voter.ve) implies candidate.(uv.candidateFaculty) = voter.(uv.voterFaculty)
     }
     all ballot: uv.ballots | some ballot.(uv.ballotVotes)
     all votes: uv.votes | some uv.ballotVotes.votes
@@ -217,24 +222,32 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
     /*  Pre Conditions
          The following are the preconditions for the submitBallot operation in English.They 
          are formally specified in the same order as listed below: 
+         - ballot must exist
          - ballot must not be submitted
          - voter must not have voted
          - election must have started
     */
-
-     ballot.(preUV.ballotSState) = HasntSubmitted
-     voter.(preUV.voterVStatus) = HasntVoted
-     elect.(preUV.electionStatus) = HasStarted
+    ballot in univ.(preUV.voterBallot)
+    ballot.(preUV.ballotSState) = HasntSubmitted
+    voter.(preUV.voterVStatus) = HasntVoted
+    elect.(preUV.electionStatus) = HasStarted
 
     /* Post Conditions
         The following are the preconditions for the submitBallot operation in English.They 
          are formally specified in the same order as listed below: 
          - ballot must now be submitted
          - voter must now have voted
+         - enforcing ifVoted & ifSubmitted Constraints
+         - enforcing ballotSState Constraint
     */
 
     ballot.(postUV.ballotSState) = Submitted
     voter.(postUV.voterVStatus) = Voted
+	let vvs = postUV.voterVStatus, bss = postUV.ballotSState{
+        all voter: postUV.voters | voter.vvs = Voted iff (voter.(postUV.voterBallot)).bss = Submitted
+	    all voter: postUV.voters | voter.vvs = HasntVoted iff (voter.(postUV.voterBallot)).bss = HasntSubmitted
+    }
+    all ballot: postUV.ballots | one ballot.(postUV.ballotSState)
 
     //FRAMECONDITIONS
     preUV != postUV
@@ -272,7 +285,8 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
     preUV.candidateCStatus = postUV.candidateCStatus
     preUV.voterBallot = postUV.voterBallot
     preUV.ballotVotes = postUV.ballotVotes
-    preUV.ballotSState = postUV.ballotSState
+#preUV.ballotSState = #postUV.ballotSState
+    #preUV.voterVStatus = #postUV.voterVStatus
 } run submitBallot for 4 but 2 uwiVotes expect 1
 
 //INSTANCES

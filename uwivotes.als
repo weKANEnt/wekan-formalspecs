@@ -227,7 +227,7 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
          - voter must not have voted
          - election must have started
     */
-    
+
     ballot in univ.(preUV.voterBallot)
     ballot.(preUV.ballotSState) = HasntSubmitted
     voter.(preUV.voterVStatus) = HasntVoted
@@ -250,7 +250,10 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
     }
     all ballot: postUV.ballots | one ballot.(postUV.ballotSState)
 
-    //FRAMECONDITIONS
+    /* Frame Conditions
+     The following are all the fields/relations that should see no change after over the "execution" of the operation
+    */
+    
     preUV != postUV
     preUV.election = postUV.election
     preUV.sDate = postUV.sDate

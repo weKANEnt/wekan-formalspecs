@@ -220,7 +220,7 @@ fact traces {
 //OPERATIONS
 pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: Election]{
     /*  Pre Conditions
-         The following are the preconditions for the submitBallot operation in English.They 
+         The following are the preconditions for the submitBallot operation in English. They 
          are formally specified in the same order as listed below: 
          - ballot must exist
          - ballot must not be submitted
@@ -234,7 +234,7 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
     elect.(preUV.electionStatus) = HasStarted
 
     /* Post Conditions
-        The following are the preconditions for the submitBallot operation in English.They 
+        The following are the preconditions for the submitBallot operation in English. They 
          are formally specified in the same order as listed below: 
          - ballot must now be submitted
          - voter must now have voted

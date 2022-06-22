@@ -214,7 +214,7 @@ fact traces {
         let uvNext = uv.next |
             some uv1,uv2: uwiVotes, v: Voter, b: Ballot, e: Election |
         skip[uv, uvNext] or
-            submitBallot[uv1,uv2,v,b,e] //currently causing counter examples in initEstablishes
+            submitBallot[uv1,uv2,v,b,e]
 } run {} for 7 but 5 uwiVotes expect 1
 
 //OPERATIONS
@@ -227,6 +227,7 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
          - voter must not have voted
          - election must have started
     */
+    
     ballot in univ.(preUV.voterBallot)
     ballot.(preUV.ballotSState) = HasntSubmitted
     voter.(preUV.voterVStatus) = HasntVoted
@@ -285,7 +286,7 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: 
     preUV.candidateCStatus = postUV.candidateCStatus
     preUV.voterBallot = postUV.voterBallot
     preUV.ballotVotes = postUV.ballotVotes
-#preUV.ballotSState = #postUV.ballotSState
+    #preUV.ballotSState = #postUV.ballotSState
     #preUV.voterVStatus = #postUV.voterVStatus
 } run submitBallot for 4 but 2 uwiVotes expect 1
 

@@ -15,7 +15,7 @@ abstract sig ifGraduate {}
 one sig isGraduate, IsntGraduate extends ifGraduate {}
 
 abstract sig ifVoted {}
-one sig HasVoted,  HasntVoted extends ifVoted {}
+one sig Voted,  HasntVoted extends ifVoted {}
 
 abstract sig ifSubmitted {}
 one sig HasntSubmitted, Submitted extends ifSubmitted {}
@@ -125,7 +125,7 @@ pred inv [uv: uwiVotes]{
         all voter: uv.voters | (voter.vcs = DoesCommute) and (voter.vgs = isGraduate) implies #((voter.vb).(uv.ballotVotes)) >= 2
     }
     let vvs = uv.voterVStatus, bss = uv.ballotSState{
-        all voter: uv.voters | voter.vvs = HasVoted iff (voter.(uv.voterBallot)).bss = Submitted
+        all voter: uv.voters | voter.vvs = Voted iff (voter.(uv.voterBallot)).bss = Submitted
     }
     
     /* General Constraints
@@ -207,23 +207,37 @@ fact traces {
     inv[uwiV/first]
     all uv: uwiVotes - uwiV/last |
         let uvNext = uv.next |
-            some uv1,uv2: uwiVotes, v: Voter, b: Ballot |
+            some uv1,uv2: uwiVotes, v: Voter, b: Ballot, e: Election |
         skip[uv, uvNext] or
-            submitBallot[uv1,uv2,v,b] //currently causing counter examples in initEstablishes
+            submitBallot[uv1,uv2,v,b,e] //currently causing counter examples in initEstablishes
 } run {} for 7 but 5 uwiVotes expect 1
 
 //OPERATIONS
-pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
-    //PRECONDITIONS
-     -- ballot must not be submitted
-     -- voter must not have voted
-     -- election must have started
+pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: Election]{
+    /*  Pre Conditions
+         The following are the preconditions for the submitBallot operation in English.They 
+         are formally specified in the same order as listed below: 
+         - ballot must not be submitted
+         - voter must not have voted
+         - election must have started
+    */
 
-    //POSTCONDITIONS
-     -- ballot must now be submitted
-     -- voter must now have voted
+     ballot.(preUV.ballotSState) = HasntSubmitted
+     voter.(preUV.voterVStatus) = HasntVoted
+     elect.(preUV.electionStatus) = HasStarted
+
+    /* Post Conditions
+        The following are the preconditions for the submitBallot operation in English.They 
+         are formally specified in the same order as listed below: 
+         - ballot must now be submitted
+         - voter must now have voted
+    */
+
+    ballot.(postUV.ballotSState) = Submitted
+    voter.(postUV.voterVStatus) = Voted
 
     //FRAMECONDITIONS
+    preUV != postUV
     preUV.election = postUV.election
     preUV.sDate = postUV.sDate
     preUV.eDate = postUV.eDate
@@ -233,11 +247,13 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
     preUV.halls = postUV.halls
     preUV.voters = postUV.voters
     preUV.emails = postUV.emails
+    preUV.voteStats = postUV.voteStats
     preUV.gradStats = postUV.gradStats
     preUV.commuteStats = postUV.commuteStats
     preUV.electStats = postUV.electStats
     preUV.ballots = postUV.ballots
     preUV.votes = postUV.votes
+    preUV.submitStats = postUV.submitStats
     preUV.electCandidates = postUV.electCandidates
     preUV.electionStart = postUV.electionStart
     preUV.electionEnd = postUV.electionEnd
@@ -256,6 +272,7 @@ pred submitBallot[preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot]{
     preUV.candidateCStatus = postUV.candidateCStatus
     preUV.voterBallot = postUV.voterBallot
     preUV.ballotVotes = postUV.ballotVotes
+    preUV.ballotSState = postUV.ballotSState
 } run submitBallot for 4 but 2 uwiVotes expect 1
 
 //INSTANCES
@@ -314,3 +331,9 @@ pred sanityCheck{
 assert initEstablishes{
 	all uv: uwiVotes| init[uv] implies inv[uv]
 }check initEstablishes
+
+assert submitBallotPreserves{
+	all preUV, postUV: uwiVotes, voter: Voter, ballot: Ballot, elect: Election|
+		inv[preUV] and submitBallot[preUV, postUV, voter, ballot, elect]
+			implies inv[postUV]
+} check submitBallotPreserves for 7 expect 0 

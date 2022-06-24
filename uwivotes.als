@@ -137,7 +137,7 @@ pred inv [uv: uwiVotes]{
         - election must have a start status
         - emails must be associated to a candidate or a voter
         - if email is the same between a candidate and a voter, then the graduate and commute status must be the same (considered the same person)
-        - if email is the same between a candidate and a voter, then the faculty and hall hould be the same (considered same person)
+        - if email is the same between a candidate and a voter, then the faculty and hall should be the same (considered same person)
         - no voter should submit an empty ballot (no categories)
         - all votes must be associated with atleast one ballot
         - number of votes any ballot has should never exceed the number of positions
